@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // Funções auxiliares de validação
+    // ============================================
+
+    // Valida se o item tem todos os campos obrigatórios
+    function validateItem() {
+      let item = request.resource.data;
+      return item.keys().hasAll(['name', 'deleted', 'createdAt', 'updatedAt'])
+        && item.name is string
+        && item.name.size() >= 1
+        && item.name.size() <= 200
+        && item.deleted is bool
+        && item.createdAt is timestamp
+        && item.updatedAt is timestamp;
+    }
+
+    // Valida se o update não altera campos imutáveis
+    function validateUpdate() {
+      let oldData = resource.data;
+      let newData = request.resource.data;
+
+      // Não pode alterar createdAt
+      return newData.createdAt == oldData.createdAt;
+    }
+
+    // ============================================
+    // Regras para Collection 'items'
+    // ============================================
+
+    match /items/{itemId} {
+
+      // MVP: Acesso público (sem autenticação necessária)
+      // Qualquer pessoa pode ler itens
+      allow read: if true;
+
+      // Qualquer pessoa pode criar itens (com validação)
+      allow create: if validateItem();
+
+      // Qualquer pessoa pode atualizar itens (com validação)
+      allow update: if validateItem() && validateUpdate();
+
+      // Qualquer pessoa pode deletar itens
+      allow delete: if true;
+
+
+      // ============================================
+      // Para PRODUÇÃO (quando adicionar autenticação):
+      // Descomente as regras abaixo e comente as acima
+      // ============================================
+
+      // Apenas usuários autenticados podem ler
+      // allow read: if request.auth != null;
+
+      // Apenas usuários autenticados podem criar (com validação)
+      // allow create: if request.auth != null && validateItem();
+
+      // Apenas usuários autenticados podem atualizar (com validação)
+      // allow update: if request.auth != null && validateItem() && validateUpdate();
+
+      // Apenas usuários autenticados podem deletar
+      // allow delete: if request.auth != null;
+
+
+      // ============================================
+      // Para MULTI-USER (compartilhamento de listas):
+      // Adicione campo 'userId' ou 'listId' aos documentos
+      // ============================================
+
+      // Exemplo com userId:
+      // allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // allow create: if request.auth != null && request.resource.data.userId == request.auth.uid && validateItem();
+      // allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // Prevenir acesso a outras collections
+    // ============================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,8 +2,9 @@
 
 ## App de Lista de Compras Compartilhada
 
-**Versão:** 1.0  
-**Data:** 16 de outubro de 2025
+**Versão:** 2.0
+**Data:** 17 de outubro de 2025
+**Arquitetura:** Firebase + Vercel (100% Gratuita)
 
 ---
 
@@ -11,97 +12,100 @@
 
 ### 1.1 Arquitetura Geral
 
-O sistema segue uma arquitetura **Cliente-Servidor** com três camadas principais:
+O sistema segue uma arquitetura **Serverless BaaS (Backend as a Service)** totalmente gratuita:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    CAMADA CLIENTE                        │
-├──────────────────────┬──────────────────────────────────┤
-│   React Native App   │      React Web App               │
-│   (iOS + Android)    │      (Navegadores)               │
-└──────────────────────┴──────────────────────────────────┘
-                          ↕ HTTPS/WebSocket
-┌─────────────────────────────────────────────────────────┐
-│                  CAMADA DE SERVIDOR                      │
-├─────────────────────────────────────────────────────────┤
-│              Java Spring Boot REST API                   │
-│  ┌─────────────┬──────────────┬────────────────┐        │
-│  │ Controllers │  Services    │  Repositories  │        │
-│  └─────────────┴──────────────┴────────────────┘        │
-└─────────────────────────────────────────────────────────┘
-                          ↕ JDBC
-┌─────────────────────────────────────────────────────────┐
-│                  CAMADA DE DADOS                         │
-├─────────────────────────────────────────────────────────┤
-│              PostgreSQL / H2 Database                    │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                      CAMADA CLIENTE                               │
+├────────────────────────────┬─────────────────────────────────────┤
+│   React Native App (Expo)  │   React Web App (Vercel)            │
+│   (iOS + Android)          │   (Navegadores)                     │
+│   ✓ Gratuito               │   ✓ Gratuito                        │
+└────────────────────────────┴─────────────────────────────────────┘
+                          ↕ HTTPS (Firebase SDK)
+┌──────────────────────────────────────────────────────────────────┐
+│                    FIREBASE SERVICES (Gratuito)                   │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┬───────────────────┬──────────────────┐         │
+│  │ Firestore    │  Authentication   │  Cloud Storage   │         │
+│  │ (Database)   │  (Auth)           │  (Files)         │         │
+│  │ Real-time    │  Anonymous/Email  │  5GB             │         │
+│  │ 50k/dia      │  10k/mês          │  1GB/dia         │         │
+│  └──────────────┴───────────────────┴──────────────────┘         │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### 1.2 Estilo Arquitetural
 
-- **Backend:** Arquitetura em Camadas (Layered Architecture)
+- **Backend:** BaaS (Backend as a Service) - Serverless
 - **Frontend:** Component-Based Architecture (React/React Native)
-- **Comunicação:** RESTful API + WebSocket para real-time
-- **Dados:** Offline-First com sincronização
+- **Comunicação:** Firebase SDK (Real-time Database/Firestore)
+- **Dados:** Offline-First nativo com sincronização automática
+- **Hospedagem Web:** Vercel (CDN Global)
+- **Hospedagem Mobile:** Expo (Build e distribuição gratuita)
 
 ---
 
 ## 2. Componentes do Sistema
 
-### 2.1 Backend - Spring Boot
+### 2.1 Firebase Backend (Serverless)
 
-#### 2.1.1 Camada de Controller (API Layer)
-
-```
-com.shoppinglist.controller
-├── ItemController.java
-│   ├── GET    /api/items          (Listar todos)
-│   ├── POST   /api/items          (Adicionar item)
-│   ├── DELETE /api/items/{id}     (Remover item)
-│   └── DELETE /api/items/clear    (Limpar lista)
-└── WebSocketController.java
-    └── /ws/items                   (Notificações real-time)
-```
-
-#### 2.1.2 Camada de Service (Business Logic)
+#### 2.1.1 Cloud Firestore (Database)
 
 ```
-com.shoppinglist.service
-├── ItemService.java
-│   ├── getAllItems()
-│   ├── addItem(ItemDTO)
-│   ├── removeItem(UUID)
-│   ├── clearAllItems()
-│   └── syncItems(List<ItemDTO>)
-└── NotificationService.java
-    └── notifyClients(ItemEvent)
+shopping-list (Collection)
+├── items (Collection)
+│   └── {itemId} (Document)
+│       ├── id: string (auto-generated)
+│       ├── name: string
+│       ├── createdAt: timestamp
+│       ├── updatedAt: timestamp
+│       └── deleted: boolean
 ```
 
-#### 2.1.3 Camada de Repository (Data Access)
+**Características:**
+
+- ✅ Real-time sincronização automática
+- ✅ Offline persistence nativa
+- ✅ 50k leituras/dia (gratuito)
+- ✅ 20k escritas/dia (gratuito)
+- ✅ 1GB armazenamento (gratuito)
+
+#### 2.1.2 Firebase Authentication (Opcional)
 
 ```
-com.shoppinglist.repository
-└── ItemRepository.java
-    extends JpaRepository<Item, UUID>
+Métodos disponíveis:
+├── Anonymous (recomendado para MVP)
+├── Email/Password
+└── Google Sign-In
 ```
 
-#### 2.1.4 Camada de Model (Domain)
+**Características:**
 
-```
-com.shoppinglist.model
-├── Item.java
-│   ├── UUID id
-│   ├── String name
-│   ├── LocalDateTime createdAt
-│   └── LocalDateTime updatedAt
-└── ItemDTO.java
-    ├── String id
-    ├── String name
-    ├── String createdAt
-    └── boolean synced
+- ✅ 10k autenticações/mês (gratuito)
+- ✅ Configuração simples
+- ✅ Segurança integrada
+
+#### 2.1.3 Firebase Security Rules
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /items/{itemId} {
+      // Permitir leitura e escrita para todos (MVP)
+      allow read, write: if true;
+
+      // Para produção com autenticação:
+      // allow read: if request.auth != null;
+      // allow create: if request.auth != null && validateItem();
+      // allow update, delete: if request.auth != null;
+    }
+  }
+}
 ```
 
-### 2.2 Frontend Mobile - React Native
+### 2.2 Frontend Mobile - React Native (Expo)
 
 ```
 shopping-list-mobile/
@@ -114,22 +118,25 @@ shopping-list-mobile/
 │   ├── screens/
 │   │   └── HomeScreen.tsx        (Tela principal)
 │   ├── services/
-│   │   ├── api.ts                (Cliente HTTP)
-│   │   ├── websocket.ts          (WebSocket client)
-│   │   └── storage.ts            (AsyncStorage)
-│   ├── store/
-│   │   ├── itemsSlice.ts         (Redux slice)
-│   │   └── store.ts              (Redux store)
+│   │   └── firebase.ts           (Firebase config & services)
 │   ├── hooks/
-│   │   ├── useItems.ts           (Hook personalizado)
-│   │   └── useSync.ts            (Hook de sincronização)
-│   └── utils/
-│       ├── syncManager.ts        (Gerenciador offline)
-│       └── notifications.ts      (Push notifications)
+│   │   ├── useItems.ts           (Hook para itens)
+│   │   └── useFirestore.ts       (Hook Firestore)
+│   └── types/
+│       └── Item.ts               (Tipos TypeScript)
+├── app.json                      (Expo config)
+├── firebase.json                 (Firebase config)
 └── App.tsx
 ```
 
-### 2.3 Frontend Web - React
+**Dependências principais:**
+
+- `firebase` - SDK Firebase
+- `@react-native-firebase/app` - Firebase core
+- `@react-native-firebase/firestore` - Firestore
+- `expo` - Build e distribuição
+
+### 2.3 Frontend Web - React (Vercel)
 
 ```
 shopping-list-web/
@@ -143,64 +150,100 @@ shopping-list-web/
 │   ├── pages/
 │   │   └── HomePage.tsx
 │   ├── services/
-│   │   ├── api.ts
-│   │   └── websocket.ts
-│   ├── store/
-│   │   ├── itemsSlice.ts
-│   │   └── store.ts
+│   │   └── firebase.ts           (Firebase config)
 │   ├── hooks/
 │   │   └── useItems.ts
 │   └── styles/
 │       └── global.css
+├── firebase.json                 (Firebase config)
+├── vercel.json                   (Vercel config)
 └── App.tsx
 ```
+
+**Dependências principais:**
+
+- `firebase` - SDK Firebase (Web)
+- `react` - Framework
+- `vite` - Build tool
 
 ---
 
 ## 3. Fluxo de Dados
 
-### 3.1 Adicionar Item (Online)
+### 3.1 Adicionar Item (Online/Offline - Automático)
 
 ```
 1. Usuário digita item → ItemInput
-2. ItemInput → dispatch(addItem)
-3. Redux store atualizado (otimistic update)
-4. API call → POST /api/items
-5. Backend valida e persiste
-6. Backend notifica via WebSocket
-7. Outros clientes recebem e atualizam
+2. ItemInput → firebase.firestore().collection('items').add()
+3. Firebase SDK adiciona localmente (cache)
+4. Interface atualizada instantaneamente (optimistic update)
+5. Firebase sincroniza com servidor quando online
+6. Outros clientes recebem atualização em tempo real
 ```
 
-### 3.2 Adicionar Item (Offline)
+**Vantagens:**
 
-```
-1. Usuário digita item → ItemInput
-2. ItemInput → dispatch(addItem)
-3. Redux store atualizado
-4. Item salvo em AsyncStorage/localStorage
-5. Item marcado como não sincronizado
-6. Quando online: syncManager envia ao backend
-7. Backend confirma → item marcado como sincronizado
-```
+- ✅ Funciona offline automaticamente
+- ✅ Sincronização transparente
+- ✅ Sem código de sincronização manual
+- ✅ Real-time out-of-the-box
 
-### 3.3 Sincronização em Tempo Real
+### 3.2 Sincronização em Tempo Real (Nativa)
 
 ```
 ┌──────────┐                   ┌──────────┐
 │ Cliente A│                   │ Cliente B│
 └────┬─────┘                   └────┬─────┘
      │                              │
-     │ POST /api/items              │
-     ├────────────────────┐         │
-     │                    ↓         │
-     │              ┌──────────┐    │
-     │              │  Backend │    │
-     │              └──────────┘    │
-     │                    │         │
-     │                    │ WebSocket Broadcast
-     │                    ├─────────┤
-     │                    ↓         ↓
-     │ ← Item adicionado  │  Item adicionado →
+     │ firestore.add()              │
+     ├───────────────────┐          │
+     │                   ↓          │
+     │          ┌─────────────┐     │
+     │          │  Firestore  │     │
+     │          │  (Cloud)    │     │
+     │          └─────────────┘     │
+     │                   │          │
+     │    Real-time Listener        │
+     │  ◄────────┼──────────────────┤
+     │           │                  │
+     │ Atualizado│         Atualizado
+```
+
+### 3.3 Operações CRUD
+
+```typescript
+// Adicionar item
+await firestore().collection("items").add({
+  name: "Leite",
+  createdAt: new Date(),
+  deleted: false,
+});
+
+// Listar itens (com listener real-time)
+firestore()
+  .collection("items")
+  .where("deleted", "==", false)
+  .orderBy("createdAt", "desc")
+  .onSnapshot((snapshot) => {
+    const items = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    updateUI(items);
+  });
+
+// Remover item (soft delete)
+await firestore().collection("items").doc(itemId).update({
+  deleted: true,
+  updatedAt: new Date(),
+});
+
+// Limpar lista
+const batch = firestore().batch();
+snapshot.docs.forEach((doc) => {
+  batch.update(doc.ref, { deleted: true });
+});
+await batch.commit();
 ```
 
 ---
@@ -209,45 +252,114 @@ shopping-list-web/
 
 ### 4.1 Tecnologias Escolhidas
 
-| Componente         | Tecnologia                | Justificativa                           |
-| ------------------ | ------------------------- | --------------------------------------- |
-| Backend Framework  | Spring Boot               | Robusto, maduro, fácil configuração     |
-| Linguagem Backend  | Java 17                   | Performance, tipagem forte, ecossistema |
-| Banco de Dados     | PostgreSQL                | Confiável, open-source, suporte a JSON  |
-| BD Desenvolvimento | H2                        | Rápido, em memória, fácil setup         |
-| Frontend Mobile    | React Native              | Código compartilhado iOS/Android        |
-| Frontend Web       | React                     | Componentização, vasto ecossistema      |
-| Estado Global      | Redux Toolkit             | Gerenciamento previsível de estado      |
-| Comunicação        | REST + WebSocket          | REST para operações, WS para real-time  |
-| Storage Local      | AsyncStorage/localStorage | Suporte offline nativo                  |
+| Componente           | Tecnologia       | Justificativa                                   | Custo   |
+| -------------------- | ---------------- | ----------------------------------------------- | ------- |
+| Backend/Database     | Firebase         | Serverless, real-time, offline-first nativo     | R$ 0,00 |
+| Hospedagem Web       | Vercel           | Deploy automático, CDN global, SSL grátis       | R$ 0,00 |
+| Mobile Framework     | React Native     | Código compartilhado iOS/Android                | R$ 0,00 |
+| Mobile Build/Deploy  | Expo             | Build na nuvem, OTA updates, distribuição fácil | R$ 0,00 |
+| Frontend Web         | React + Vite     | Rápido, moderno, otimizado                      | R$ 0,00 |
+| Autenticação         | Firebase Auth    | Integrado, seguro, múltiplos providers          | R$ 0,00 |
+| Storage (se needed)  | Firebase Storage | Armazenamento de arquivos integrado             | R$ 0,00 |
+| Analytics (opcional) | Firebase         | Analytics gratuito integrado                    | R$ 0,00 |
+
+**Total de custos: R$ 0,00 / mês** 🎉
 
 ### 4.2 Padrões de Design
 
-#### 4.2.1 Backend
+#### 4.2.1 Frontend (Mobile e Web)
 
-- **MVC (Model-View-Controller):** Separação clara de responsabilidades
-- **Repository Pattern:** Abstração de acesso a dados
-- **DTO (Data Transfer Object):** Separação entre entidades e API
-- **Dependency Injection:** Gerenciado pelo Spring
-- **Observer Pattern:** WebSocket para notificações
+- **Component Pattern:** Componentes reutilizáveis React
+- **Custom Hooks:** Lógica reutilizável (`useItems`, `useFirestore`)
+- **Observer Pattern:** Firebase listeners para real-time
+- **Optimistic Update:** Firebase SDK gerencia automaticamente
+- **Offline-First:** Persistência local automática do Firebase
 
-#### 4.2.2 Frontend
+#### 4.2.2 Firebase
 
-- **Component Pattern:** Componentes reutilizáveis
-- **Container/Presenter:** Separação lógica/apresentação
-- **Custom Hooks:** Lógica reutilizável
-- **Redux Pattern:** Fluxo unidirecional de dados
-- **Optimistic Update:** Melhor UX
+- **NoSQL Document Database:** Firestore collections/documents
+- **Real-time Listeners:** onSnapshot para sincronização
+- **Security Rules:** Validação no servidor
+- **Batch Operations:** Operações em lote para performance
+
+### 4.3 Comparação: Arquitetura Anterior vs Nova
+
+| Aspecto            | Spring Boot + PostgreSQL     | Firebase + Vercel             |
+| ------------------ | ---------------------------- | ----------------------------- |
+| **Custo**          | Servidor pago (~R$20-50/mês) | **R$ 0,00**                   |
+| **Manutenção**     | Alta (servidor, DB, deploy)  | **Zero (gerenciado)**         |
+| **Escalabilidade** | Manual                       | **Automática**                |
+| **Real-time**      | WebSocket (complexo)         | **Nativo (simples)**          |
+| **Offline**        | Implementação manual         | **Nativo (automático)**       |
+| **Setup inicial**  | Complexo (~2-3 dias)         | **Rápido (~2-3 horas)**       |
+| **Deploy**         | Manual (CI/CD necessário)    | **Automático (git push)**     |
+| **Backup**         | Manual                       | **Automático**                |
+| **SSL/HTTPS**      | Configuração necessária      | **Incluído**                  |
+| **CDN**            | Não incluído                 | **Global CDN incluído**       |
+| **Logs/Monitor**   | Implementar                  | **Firebase Console incluído** |
+
+### 4.4 Vantagens da Nova Arquitetura
+
+✅ **Zero custos operacionais**
+✅ **Sem servidor para gerenciar**
+✅ **Real-time sincronização nativa**
+✅ **Offline-first automático**
+✅ **Escalabilidade automática**
+✅ **Deploy em segundos**
+✅ **SSL e CDN incluídos**
+✅ **Backup automático**
+✅ **Menor complexidade de código**
+✅ **Ideal para MVP e validação**
 
 ---
 
-## 5. Sincronização e Conflitos
+## 5. Limites do Plano Gratuito (Firebase Spark)
 
-### 5.1 Estratégia de Sincronização
+### 5.1 Firestore
 
-#### Online:
+| Recurso               | Limite Gratuito | Suficiente para            |
+| --------------------- | --------------- | -------------------------- |
+| Leituras/dia          | 50.000          | ~2.000 usuários ativos/dia |
+| Escritas/dia          | 20.000          | ~800 atualizações/hora     |
+| Exclusões/dia         | 20.000          | ~800 exclusões/hora        |
+| Armazenamento         | 1 GB            | ~1 milhão de documentos    |
+| Transferência de rede | 10 GB/mês       | ~300.000 operações/mês     |
 
-- **WebSocket** para notificações instantâneas
+### 5.2 Vercel
+
+| Recurso         | Limite Gratuito | Suficiente para       |
+| --------------- | --------------- | --------------------- |
+| Bandwidth       | 100 GB/mês      | ~100.000 visitas/mês  |
+| Builds          | Ilimitados      | Deploy a cada commit  |
+| Serverless Exec | 100 GB-Horas    | Amplamente suficiente |
+| Projetos        | Ilimitados      | Quantos você quiser   |
+
+### 5.3 Expo
+
+| Recurso      | Limite Gratuito | Suficiente para          |
+| ------------ | --------------- | ------------------------ |
+| Builds       | Ilimitados      | Builds ilimitados        |
+| OTA Updates  | Ilimitados      | Updates over-the-air     |
+| Distribuição | Gratuito        | TestFlight, Play Console |
+
+### 5.4 Estimativa de Capacidade
+
+**Cenário Realista (Uso Moderado):**
+
+- 100 usuários ativos/dia
+- 10 ações por usuário/dia
+- Total: 1.000 operações/dia
+- **Uso: 2% do limite gratuito** ✅
+
+**Cenário Otimista (Muito Uso):**
+
+- 1.000 usuários ativos/dia
+- 20 ações por usuário/dia
+- Total: 20.000 operações/dia
+- **Uso: 40% do limite gratuito** ✅
+
+**Conclusão:** O plano gratuito é **mais que suficiente** para MVP e primeiros anos de operação!
+
 - **Polling fallback** a cada 30 segundos se WebSocket falhar
 
 #### Offline:

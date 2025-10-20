@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "shopping-list-app"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

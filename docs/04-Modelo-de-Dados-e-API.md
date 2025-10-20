@@ -1,103 +1,291 @@
-# Modelo de Dados e API
+# Modelo de Dados e Firebase
 
 ## App de Lista de Compras Compartilhada
 
-**Versão:** 1.0  
-**Data:** 16 de outubro de 2025
+**Versão:** 2.0
+**Data:** 17 de outubro de 2025
+**Backend:** Firebase Firestore (NoSQL)
 
 ---
 
-## 1. Modelo de Dados
+## 1. Modelo de Dados (Firestore)
 
-### 1.1 Diagrama Entidade-Relacionamento
+### 1.1 Estrutura do Banco de Dados
 
 ```
-┌─────────────────────────────────────┐
-│              ITEM                   │
-├─────────────────────────────────────┤
-│ PK │ id: UUID                       │
-│    │ name: VARCHAR(200)             │
-│    │ created_at: TIMESTAMP          │
-│    │ updated_at: TIMESTAMP          │
-│    │ deleted_at: TIMESTAMP (NULL)   │
-└─────────────────────────────────────┘
+Firestore Database
+└── items (Collection)
+    └── {itemId} (Document - Auto-generated ID)
+        ├── name: string
+        ├── createdAt: timestamp
+        ├── updatedAt: timestamp
+        └── deleted: boolean
 ```
 
-### 1.2 Descrição das Entidades
+### 1.2 Descrição dos Campos
 
-#### Entidade: Item
+#### Collection: items
 
-| Campo      | Tipo      | Tamanho | Nulo | Padrão | Descrição                           |
-| ---------- | --------- | ------- | ---- | ------ | ----------------------------------- |
-| id         | UUID      | -       | Não  | auto   | Identificador único do item         |
-| name       | VARCHAR   | 200     | Não  | -      | Nome do produto                     |
-| created_at | TIMESTAMP | -       | Não  | NOW()  | Data/hora de criação                |
-| updated_at | TIMESTAMP | -       | Não  | NOW()  | Data/hora da última atualização     |
-| deleted_at | TIMESTAMP | -       | Sim  | NULL   | Data/hora de exclusão (soft delete) |
+| Campo     | Tipo      | Obrigatório | Indexado | Descrição                       |
+| --------- | --------- | ----------- | -------- | ------------------------------- |
+| id        | string    | Sim (auto)  | Sim      | ID gerado automaticamente       |
+| name      | string    | Sim         | Não      | Nome do produto (1-200 chars)   |
+| createdAt | timestamp | Sim         | Sim      | Data/hora de criação            |
+| updatedAt | timestamp | Sim         | Não      | Data/hora da última atualização |
+| deleted   | boolean   | Sim         | Sim      | Soft delete (false = ativo)     |
 
-**Constraints:**
+**Validações:**
 
-- `PRIMARY KEY (id)`
-- `CHECK (LENGTH(TRIM(name)) > 0)` - Nome não pode ser vazio
-- `INDEX idx_items_deleted_at (deleted_at)` - Otimiza consultas de itens ativos
-- `INDEX idx_items_updated_at (updated_at)` - Otimiza sincronização
+- `name`: 1-200 caracteres, não vazio após trim
+- `deleted`: padrão false
+- `createdAt`: auto-gerado no cliente
+- `updatedAt`: auto-gerado no cliente
 
 ---
 
-## 2. Scripts SQL
+## 2. Firebase Security Rules
 
-### 2.1 Criação de Tabelas (PostgreSQL)
+### 2.1 Regras de Segurança (Firestore)
 
-```sql
--- Criação da extensão para UUID (se não existir)
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
--- Tabela de itens
-CREATE TABLE items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(200) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL,
-    CONSTRAINT name_not_empty CHECK (LENGTH(TRIM(name)) > 0)
-);
+    // Função auxiliar para validar item
+    function validateItem() {
+      let item = request.resource.data;
+      return item.name is string
+        && item.name.size() >= 1
+        && item.name.size() <= 200
+        && item.deleted is bool
+        && item.createdAt is timestamp
+        && item.updatedAt is timestamp;
+    }
 
--- Índices para performance
-CREATE INDEX idx_items_deleted_at ON items(deleted_at) WHERE deleted_at IS NULL;
-CREATE INDEX idx_items_updated_at ON items(updated_at DESC);
-CREATE INDEX idx_items_name ON items(name) WHERE deleted_at IS NULL;
+    // Regras para collection 'items'
+    match /items/{itemId} {
+      // MVP: Acesso público (sem autenticação)
+      allow read: if true;
+      allow create: if validateItem();
+      allow update: if validateItem();
+      allow delete: if true;
 
--- Trigger para atualizar updated_at automaticamente
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_items_updated_at
-    BEFORE UPDATE ON items
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Comentários para documentação
-COMMENT ON TABLE items IS 'Tabela de itens da lista de compras';
-COMMENT ON COLUMN items.id IS 'Identificador único UUID';
-COMMENT ON COLUMN items.name IS 'Nome do produto (1-200 caracteres)';
-COMMENT ON COLUMN items.deleted_at IS 'Soft delete - NULL para itens ativos';
+      // Para produção (com autenticação):
+      // allow read: if request.auth != null;
+      // allow create: if request.auth != null && validateItem();
+      // allow update: if request.auth != null && validateItem();
+      // allow delete: if request.auth != null;
+    }
+  }
+}
 ```
 
-### 2.2 Queries Comuns
+### 2.2 Índices do Firestore
 
-```sql
--- Buscar todos os itens ativos
-SELECT id, name, created_at, updated_at
-FROM items
-WHERE deleted_at IS NULL
-ORDER BY created_at DESC;
+O Firestore criará índices automaticamente, mas você pode otimizar:
 
--- Adicionar novo item
+```
+Collection: items
+Campos indexados:
+  - deleted (Ascending)
+  - createdAt (Descending)
+
+Query necessária:
+  where('deleted', '==', false).orderBy('createdAt', 'desc')
+```
+
+**Criar índice composto via Firebase Console:**
+
+1. Acesse Firebase Console → Firestore → Indexes
+2. Crie índice composto:
+   - Collection: `items`
+   - Fields: `deleted (Ascending)`, `createdAt (Descending)`
+   - Query scope: `Collection`
+
+---
+
+## 3. Operações com Firebase SDK
+
+### 3.1 Configuração do Firebase
+
+**TypeScript (Web e Mobile):**
+
+```typescript
+// src/services/firebase.ts
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+```
+
+### 3.2 CRUD Operations
+
+#### 3.2.1 Criar Item (Create)
+
+```typescript
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { db } from "./firebase";
+
+async function createItem(name: string) {
+  try {
+    const docRef = await addDoc(collection(db, "items"), {
+      name: name.trim(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      deleted: false,
+    });
+
+    console.log("Item criado com ID:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Erro ao criar item:", error);
+    throw error;
+  }
+}
+```
+
+#### 3.2.2 Listar Itens (Read) - Real-time
+
+```typescript
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
+import { db } from "./firebase";
+
+function listenToItems(callback: (items: Item[]) => void) {
+  const q = query(
+    collection(db, "items"),
+    where("deleted", "==", false),
+    orderBy("createdAt", "desc")
+  );
+
+  // Real-time listener
+  const unsubscribe = onSnapshot(
+    q,
+    (snapshot) => {
+      const items = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Item[];
+
+      callback(items);
+    },
+    (error) => {
+      console.error("Erro ao escutar itens:", error);
+    }
+  );
+
+  // Retorna função para cancelar listener
+  return unsubscribe;
+}
+
+// Uso:
+const unsubscribe = listenToItems((items) => {
+  console.log("Itens atualizados:", items);
+  updateUI(items);
+});
+
+// Cancelar quando não precisar mais
+unsubscribe();
+```
+
+#### 3.2.3 Atualizar Item (Update)
+
+```typescript
+import { doc, updateDoc, Timestamp } from "firebase/firestore";
+import { db } from "./firebase";
+
+async function updateItem(itemId: string, newName: string) {
+  try {
+    const itemRef = doc(db, "items", itemId);
+    await updateDoc(itemRef, {
+      name: newName.trim(),
+      updatedAt: Timestamp.now(),
+    });
+
+    console.log("Item atualizado");
+  } catch (error) {
+    console.error("Erro ao atualizar item:", error);
+    throw error;
+  }
+}
+```
+
+#### 3.2.4 Remover Item (Delete - Soft)
+
+```typescript
+import { doc, updateDoc, Timestamp } from "firebase/firestore";
+import { db } from "./firebase";
+
+async function deleteItem(itemId: string) {
+  try {
+    const itemRef = doc(db, "items", itemId);
+    await updateDoc(itemRef, {
+      deleted: true,
+      updatedAt: Timestamp.now(),
+    });
+
+    console.log("Item removido (soft delete)");
+  } catch (error) {
+    console.error("Erro ao remover item:", error);
+    throw error;
+  }
+}
+```
+
+#### 3.2.5 Limpar Toda Lista (Clear All)
+
+```typescript
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "./firebase";
+
+async function clearAllItems() {
+  try {
+    const q = query(collection(db, "items"), where("deleted", "==", false));
+
+    const snapshot = await getDocs(q);
+
+    // Usar batch para operação atômica
+    const batch = writeBatch(db);
+
+    snapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        deleted: true,
+        updatedAt: Timestamp.now(),
+      });
+    });
+
+    await batch.commit();
+    console.log(`${snapshot.size} itens removidos`);
+  } catch (error) {
+    console.error("Erro ao limpar lista:", error);
+    throw error;
+  }
+}
+```
+
 INSERT INTO items (name)
 VALUES ('Leite')
 RETURNING id, name, created_at, updated_at;
@@ -106,14 +294,14 @@ RETURNING id, name, created_at, updated_at;
 UPDATE items
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = 'uuid-aqui'
-  AND deleted_at IS NULL
+AND deleted_at IS NULL
 RETURNING id;
 
 -- Limpar toda a lista
 UPDATE items
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE deleted_at IS NULL
-RETURNING COUNT(*);
+RETURNING COUNT(\*);
 
 -- Buscar itens atualizados após determinado timestamp (sincronização)
 SELECT id, name, created_at, updated_at, deleted_at
@@ -124,14 +312,15 @@ ORDER BY updated_at ASC;
 -- Hard delete de itens antigos (cleanup - executar periodicamente)
 DELETE FROM items
 WHERE deleted_at IS NOT NULL
-  AND deleted_at < CURRENT_TIMESTAMP - INTERVAL '30 days';
+AND deleted_at < CURRENT_TIMESTAMP - INTERVAL '30 days';
 
 -- Estatísticas
 SELECT
-    COUNT(*) FILTER (WHERE deleted_at IS NULL) as items_ativos,
-    COUNT(*) FILTER (WHERE deleted_at IS NOT NULL) as items_deletados,
-    COUNT(*) as total
+COUNT(_) FILTER (WHERE deleted_at IS NULL) as items_ativos,
+COUNT(_) FILTER (WHERE deleted_at IS NOT NULL) as items_deletados,
+COUNT(\*) as total
 FROM items;
+
 ```
 
 ---
@@ -140,19 +329,21 @@ FROM items;
 
 ### 3.1 Informações Gerais
 
-**Base URL:** `http://localhost:8080/api`  
+**Base URL:** `http://localhost:8080/api`
 **Produção:** `https://shopping-list-api.com/api`
 
-**Formato:** JSON  
-**Charset:** UTF-8  
+**Formato:** JSON
+**Charset:** UTF-8
 **Versionamento:** `/api/v1` (futuro)
 
 **Headers Padrão:**
 
 ```
+
 Content-Type: application/json
 Accept: application/json
-```
+
+````
 
 ### 3.2 Códigos de Status HTTP
 
@@ -176,7 +367,7 @@ Accept: application/json
   "data": { ... },
   "timestamp": "2025-10-16T10:30:00Z"
 }
-```
+````
 
 #### Erro
 
@@ -489,7 +680,7 @@ Accept: application/json
 
 ### 5.1 Conexão WebSocket
 
-**Endpoint:** `ws://localhost:8080/ws/items`  
+**Endpoint:** `ws://localhost:8080/ws/items`
 **Produção:** `wss://shopping-list-api.com/ws/items`
 
 **Protocolo:** WebSocket (RFC 6455)
@@ -497,23 +688,23 @@ Accept: application/json
 **Conexão:**
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8080/ws/items');
+const ws = new WebSocket("ws://localhost:8080/ws/items");
 
 ws.onopen = () => {
-  console.log('Conectado ao WebSocket');
+  console.log("Conectado ao WebSocket");
 };
 
 ws.onmessage = (event) => {
   const message = JSON.parse(event.data);
-  console.log('Mensagem recebida:', message);
+  console.log("Mensagem recebida:", message);
 };
 
 ws.onerror = (error) => {
-  console.error('Erro WebSocket:', error);
+  console.error("Erro WebSocket:", error);
 };
 
 ws.onclose = () => {
-  console.log('Conexão fechada');
+  console.log("Conexão fechada");
 };
 ```
 
@@ -706,12 +897,12 @@ export interface ClearResponse {
 
 // WebSocket messages
 export type WebSocketMessageType =
-  | 'ITEM_ADDED'
-  | 'ITEM_REMOVED'
-  | 'LIST_CLEARED'
-  | 'PING'
-  | 'PONG'
-  | 'ERROR';
+  | "ITEM_ADDED"
+  | "ITEM_REMOVED"
+  | "LIST_CLEARED"
+  | "PING"
+  | "PONG"
+  | "ERROR";
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -748,12 +939,12 @@ export interface WebSocketMessage {
 
 ```javascript
 // 1. Cliente envia requisição
-const response = await fetch('http://localhost:8080/api/items', {
-  method: 'POST',
+const response = await fetch("http://localhost:8080/api/items", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  body: JSON.stringify({ name: 'Banana' }),
+  body: JSON.stringify({ name: "Banana" }),
 });
 
 const result = await response.json();
@@ -778,18 +969,18 @@ const result = await response.json();
 // 1. Cliente está offline, adiciona item localmente
 const localItem = {
   id: generateUUID(),
-  name: 'Tomate',
+  name: "Tomate",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   synced: false,
 };
-await localStorage.setItem('pendingItems', JSON.stringify([localItem]));
+await localStorage.setItem("pendingItems", JSON.stringify([localItem]));
 
 // 2. Cliente volta online
-const pendingItems = JSON.parse(await localStorage.getItem('pendingItems'));
+const pendingItems = JSON.parse(await localStorage.getItem("pendingItems"));
 for (const item of pendingItems) {
-  const response = await fetch('http://localhost:8080/api/items', {
-    method: 'POST',
+  const response = await fetch("http://localhost:8080/api/items", {
+    method: "POST",
     body: JSON.stringify({ name: item.name }),
   });
 

@@ -2,8 +2,9 @@
 
 ## App de Lista de Compras Compartilhada
 
-**Versão:** 1.0  
-**Data:** 16 de outubro de 2025
+**Versão:** 2.0
+**Data:** 17 de outubro de 2025
+**Arquitetura:** Firebase + Vercel (100% Gratuita)
 
 ---
 
@@ -20,61 +21,43 @@ shopping-list-app/
 │   ├── 04-Modelo-de-Dados-e-API.md
 │   └── 05-Guia-de-Desenvolvimento.md
 │
-├── backend/                       # Spring Boot API
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/shoppinglist/
-│   │   │   │   ├── ShoppingListApplication.java
-│   │   │   │   ├── controller/
-│   │   │   │   ├── service/
-│   │   │   │   ├── repository/
-│   │   │   │   ├── model/
-│   │   │   │   ├── dto/
-│   │   │   │   ├── config/
-│   │   │   │   └── exception/
-│   │   │   └── resources/
-│   │   │       ├── application.properties
-│   │   │       ├── application-dev.properties
-│   │   │       └── application-prod.properties
-│   │   └── test/
-│   ├── pom.xml
-│   └── README.md
-│
-├── mobile/                        # React Native App
+├── mobile/                        # React Native (Expo)
 │   ├── src/
 │   │   ├── components/
 │   │   ├── screens/
 │   │   ├── services/
-│   │   ├── store/
+│   │   │   └── firebase.ts        # Config Firebase
 │   │   ├── hooks/
-│   │   ├── utils/
+│   │   │   └── useItems.ts        # Hook para itens
 │   │   ├── types/
+│   │   │   └── Item.ts
 │   │   └── constants/
-│   ├── android/
-│   ├── ios/
+│   │       └── config.ts
+│   ├── app.json                   # Expo config
+│   ├── .env                       # Variáveis de ambiente
 │   ├── package.json
-│   ├── tsconfig.json
-│   ├── app.json
 │   └── README.md
 │
-├── web/                          # React Web App
+├── web/                          # React Web (Vercel)
 │   ├── src/
 │   │   ├── components/
 │   │   ├── pages/
 │   │   ├── services/
-│   │   ├── store/
+│   │   │   └── firebase.ts        # Config Firebase
 │   │   ├── hooks/
+│   │   │   └── useItems.ts
 │   │   ├── types/
 │   │   └── styles/
 │   ├── public/
+│   ├── .env                       # Variáveis de ambiente
+│   ├── vercel.json                # Config Vercel
 │   ├── package.json
-│   ├── tsconfig.json
 │   └── README.md
 │
-├── database/                     # Scripts SQL
-│   ├── schema.sql
-│   ├── seeds.sql
-│   └── migrations/
+├── firebase/                     # Configuração Firebase
+│   ├── firestore.rules           # Security rules
+│   ├── firestore.indexes.json    # Índices
+│   └── firebase.json              # Firebase config
 │
 └── README.md                     # Documentação principal
 ```
@@ -83,50 +66,50 @@ shopping-list-app/
 
 ## 2. Tecnologias e Versões
 
-### 2.1 Backend
+### 2.1 Backend (Firebase)
 
-| Tecnologia       | Versão | Propósito               |
-| ---------------- | ------ | ----------------------- |
-| Java             | 17 LTS | Linguagem principal     |
-| Spring Boot      | 3.2.x  | Framework               |
-| Spring Web       | -      | REST API                |
-| Spring Data JPA  | -      | Acesso a dados          |
-| Spring WebSocket | -      | Real-time communication |
-| PostgreSQL       | 15+    | Banco de dados produção |
-| H2 Database      | -      | Banco desenvolvimento   |
-| Lombok           | -      | Redução de boilerplate  |
-| MapStruct        | -      | Mapeamento DTO/Entity   |
-| JUnit 5          | -      | Testes unitários        |
-| Mockito          | -      | Mocks para testes       |
-| Maven            | 3.9+   | Build tool              |
+| Tecnologia         | Versão | Propósito                     | Custo  |
+| ------------------ | ------ | ----------------------------- | ------ |
+| Firebase Firestore | Latest | Database NoSQL real-time      | Grátis |
+| Firebase Auth      | Latest | Autenticação (opcional MVP)   | Grátis |
+| Firebase Storage   | Latest | Armazenamento (se necessário) | Grátis |
+| Firebase Hosting   | Latest | Hospedagem (alternativa)      | Grátis |
 
-### 2.2 Frontend Mobile
+**Limites gratuitos:**
 
-| Tecnologia                     | Versão | Propósito               |
-| ------------------------------ | ------ | ----------------------- |
-| React Native                   | 0.73+  | Framework mobile        |
-| TypeScript                     | 5.x    | Linguagem               |
-| Redux Toolkit                  | 2.x    | Gerenciamento de estado |
-| React Navigation               | 6.x    | Navegação               |
-| Axios                          | 1.x    | Cliente HTTP            |
-| AsyncStorage                   | -      | Storage local           |
-| React Native Paper             | 5.x    | UI components           |
-| Socket.io Client               | 4.x    | WebSocket               |
-| React Native Push Notification | -      | Notificações            |
+- Firestore: 50k leituras, 20k escritas, 20k exclusões por dia
+- Storage: 5GB armazenamento, 1GB/dia transferência
+- Auth: 10k autenticações/mês
 
-### 2.3 Frontend Web
+### 2.2 Frontend Mobile (Expo)
 
-| Tecnologia        | Versão | Propósito     |
-| ----------------- | ------ | ------------- |
-| React             | 18.x   | Framework     |
-| TypeScript        | 5.x    | Linguagem     |
-| Vite              | 5.x    | Build tool    |
-| Redux Toolkit     | 2.x    | Estado global |
-| React Router      | 6.x    | Roteamento    |
-| Axios             | 1.x    | Cliente HTTP  |
-| Socket.io Client  | 4.x    | WebSocket     |
-| Material-UI (MUI) | 5.x    | UI components |
-| Styled Components | 6.x    | Estilos       |
+| Tecnologia         | Versão | Propósito            | Custo  |
+| ------------------ | ------ | -------------------- | ------ |
+| React Native       | 0.73+  | Framework mobile     | Grátis |
+| Expo               | ~50    | Build e distribuição | Grátis |
+| TypeScript         | 5.x    | Linguagem            | Grátis |
+| Firebase SDK       | 10.x   | Cliente Firebase     | Grátis |
+| React Navigation   | 6.x    | Navegação            | Grátis |
+| React Native Paper | 5.x    | UI Components        | Grátis |
+
+### 2.3 Frontend Web (Vercel)
+
+| Tecnologia   | Versão | Propósito           | Custo  |
+| ------------ | ------ | ------------------- | ------ |
+| React        | 18.x   | Framework           | Grátis |
+| Vite         | 5.x    | Build tool          | Grátis |
+| TypeScript   | 5.x    | Linguagem           | Grátis |
+| Firebase SDK | 10.x   | Cliente Firebase    | Grátis |
+| React Router | 6.x    | Roteamento          | Grátis |
+| Material-UI  | 5.x    | UI Components       | Grátis |
+| Vercel       | -      | Hospedagem e deploy | Grátis |
+
+**Limites gratuitos Vercel:**
+
+- 100 GB bandwidth/mês
+- Builds ilimitados
+- Projetos ilimitados
+- SSL e CDN incluídos
 
 ---
 
@@ -134,49 +117,59 @@ shopping-list-app/
 
 ### 3.1 Pré-requisitos
 
-#### Para Backend:
+#### Para Todos:
 
-- Java JDK 17 ou superior
-- Maven 3.9+
-- PostgreSQL 15+ (ou usar H2 para dev)
-- IDE: IntelliJ IDEA / Eclipse / VS Code
+- Node.js 18+ e npm/yarn
+- Git
+- Conta Google (para Firebase)
+- Conta GitHub (para Vercel)
+- IDE: VS Code (recomendado)
 
 #### Para Mobile:
 
-- Node.js 18+ e npm/yarn
-- React Native CLI
-- Android Studio (para Android)
-- Xcode 14+ (para iOS - apenas macOS)
-- Dispositivo físico ou emulador
+- Android Studio (para Android) OU
+- Xcode 14+ (para iOS - apenas macOS) OU
+- Expo Go App no celular (mais fácil)
 
-#### Para Web:
-
-- Node.js 18+ e npm/yarn
-- Navegador moderno
-- IDE: VS Code
-
-### 3.2 Instalação - Backend
+### 3.2 Setup Firebase (Uma vez só)
 
 ```bash
-# 1. Clonar repositório
-cd shopping-list-app/backend
+# 1. Instalar Firebase CLI
+npm install -g firebase-tools
 
-# 2. Configurar banco de dados (dev usa H2, prod usa PostgreSQL)
-# Editar src/main/resources/application-dev.properties se necessário
+# 2. Fazer login
+firebase login
 
-# 3. Build do projeto
-mvn clean install
+# 3. Criar projeto no Firebase Console
+# Acesse: https://console.firebase.google.com
+# Clique em "Adicionar projeto"
+# Nome: shopping-list-app
+# Desabilite Google Analytics (opcional para MVP)
 
-# 4. Executar aplicação
-mvn spring-boot:run
+# 4. Inicializar Firebase no projeto
+cd shopping-list-app
+firebase init
 
-# Ou executar com profile específico
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# Selecione:
+# - Firestore
+# - Hosting (opcional, se não usar Vercel)
+#
+# Configuração:
+# - Use existing project: shopping-list-app
+# - Firestore rules: firebase/firestore.rules
+# - Firestore indexes: firebase/firestore.indexes.json
+# - Public directory: web/dist (se usar Firebase Hosting)
 
-# Aplicação estará disponível em http://localhost:8080
+# 5. Obter configuração do Firebase
+# Firebase Console → Project Settings → Your apps → Web
+# Copie o firebaseConfig
+
+# 6. Deploy das regras e índices
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
 ```
 
-### 3.3 Instalação - Mobile
+### 3.3 Instalação - Mobile (Expo)
 
 ```bash
 # 1. Navegar para pasta mobile
@@ -184,32 +177,33 @@ cd shopping-list-app/mobile
 
 # 2. Instalar dependências
 npm install
-# ou
-yarn install
 
-# 3. Para iOS (apenas macOS)
-cd ios && pod install && cd ..
+# 3. Instalar Expo CLI globalmente (se não tiver)
+npm install -g expo-cli
 
-# 4. Configurar variáveis de ambiente
-cp .env.example .env
-# Editar .env com a URL da API
+# 4. Criar arquivo .env
+echo "EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key_here
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+EXPO_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef" > .env
 
-# 5. Executar no Android
-npm run android
-# ou
-yarn android
+# 5. Iniciar Expo
+npx expo start
 
-# 6. Executar no iOS
-npm run ios
-# ou
-yarn ios
+# Opções:
+# - Pressione 'a' para Android Emulator
+# - Pressione 'i' para iOS Simulator (macOS only)
+# - Escaneie QR Code com Expo Go app no celular
 
-# Para executar com device específico
-npm run android -- --deviceId=emulator-5554
-npm run ios -- --simulator="iPhone 14 Pro"
+# 6. Rodar em device específico
+npx expo start --android
+npx expo start --ios
+npx expo start --web
 ```
 
-### 3.4 Instalação - Web
+### 3.4 Instalação - Web (React + Vite)
 
 ```bash
 # 1. Navegar para pasta web
@@ -217,61 +211,135 @@ cd shopping-list-app/web
 
 # 2. Instalar dependências
 npm install
-# ou
-yarn install
 
-# 3. Configurar variáveis de ambiente
-cp .env.example .env
-# Editar .env com a URL da API
+# 3. Criar arquivo .env
+echo "VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef" > .env
 
 # 4. Executar em modo desenvolvimento
 npm run dev
-# ou
-yarn dev
 
 # Aplicação estará disponível em http://localhost:5173
+
+# 5. Build para produção
+npm run build
+
+# 6. Preview do build
+npm run preview
 ```
 
----
+### 3.5 Deploy no Vercel (Web) - GRATUITO
 
-## 4. Configurações
+```bash
+# Método 1: Via CLI (recomendado)
 
-### 4.1 Backend - application.properties
+# 1. Instalar Vercel CLI
+npm i -g vercel
 
-#### Desenvolvimento (application-dev.properties)
+# 2. Fazer login
+vercel login
 
-```properties
-# Server
-server.port=8080
-spring.application.name=shopping-list-api
+# 3. Na pasta web/
+cd shopping-list-app/web
 
-# Database H2 (in-memory para desenvolvimento)
-spring.datasource.url=jdbc:h2:mem:shoppinglist
-spring.datasource.driverClassName=org.h2.Driver
+# 4. Deploy
+vercel
+
+# Seguir prompts:
+# - Set up and deploy? Yes
+# - Which scope? Sua conta
+# - Link to existing project? No
+# - Project name? shopping-list-web
+# - Directory? ./
+# - Override settings? No
+
+# 5. Configurar variáveis de ambiente
+vercel env add VITE_FIREBASE_API_KEY
+vercel env add VITE_FIREBASE_AUTH_DOMAIN
+vercel env add VITE_FIREBASE_PROJECT_ID
+# ... (adicionar todas as variáveis)
+
+# 6. Deploy para produção
+vercel --prod
+
+# Método 2: Via GitHub (automático)
+
+# 1. Push para GitHub
+git push origin main
+
+# 2. Acesse vercel.com
+# 3. Clique em "Import Project"
+# 4. Selecione seu repositório
+# 5. Configure:
+#    - Framework: Vite
+#    - Root Directory: web
+#    - Build Command: npm run build
+#    - Output Directory: dist
+# 6. Adicione variáveis de ambiente
+# 7. Deploy!
+
+# Cada push para main = deploy automático! 🚀
+```
+
+### 3.6 Build Mobile (Expo) - GRATUITO
+
+```bash
+# 1. Criar conta Expo (se não tiver)
+# Acesse: https://expo.dev
+
+# 2. Login via CLI
+npx expo login
+
+# 3. Configurar app.json
+# Edite mobile/app.json com suas informações
+
+# 4. Build para Android
+npx eas build --platform android
+
+# 5. Build para iOS (precisa de conta Apple Developer)
+npx eas build --platform ios
+
+# 6. OTA Update (atualização sem recompilar)
+npx eas update --branch production
+
+# Builds são feitos na nuvem (Expo) - Gratuito!
+# Você receberá um APK/IPA para distribuir
+```
+
 spring.datasource.username=sa
 spring.datasource.password=
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 
 # H2 Console (http://localhost:8080/h2-console)
+
 spring.h2.console.enabled=true
 spring.h2.console.path=/h2-console
 
 # JPA/Hibernate
+
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
 # WebSocket
+
 spring.websocket.allowed-origins=http://localhost:5173,http://localhost:3000
 
 # Logging
+
 logging.level.root=INFO
 logging.level.com.shoppinglist=DEBUG
 logging.level.org.springframework.web=DEBUG
 
 # CORS
+
 app.cors.allowed-origins=http://localhost:5173,http://localhost:3000
-```
+
+````
 
 #### Produção (application-prod.properties)
 
@@ -307,7 +375,7 @@ server.ssl.enabled=true
 
 # CORS
 app.cors.allowed-origins=${ALLOWED_ORIGINS}
-```
+````
 
 ### 4.2 Mobile - .env
 
@@ -475,40 +543,40 @@ class ItemControllerIntegrationTest {
 
 ```typescript
 // Component Test (React Testing Library)
-import { render, screen, fireEvent } from '@testing-library/react';
-import ItemInput from '../ItemInput';
+import { render, screen, fireEvent } from "@testing-library/react";
+import ItemInput from "../ItemInput";
 
-describe('ItemInput', () => {
-  it('should add item when form is submitted', () => {
+describe("ItemInput", () => {
+  it("should add item when form is submitted", () => {
     const onAdd = jest.fn();
     render(<ItemInput onAdd={onAdd} />);
 
-    const input = screen.getByPlaceholderText('Adicionar item...');
-    fireEvent.change(input, { target: { value: 'Arroz' } });
-    fireEvent.submit(screen.getByRole('form'));
+    const input = screen.getByPlaceholderText("Adicionar item...");
+    fireEvent.change(input, { target: { value: "Arroz" } });
+    fireEvent.submit(screen.getByRole("form"));
 
-    expect(onAdd).toHaveBeenCalledWith('Arroz');
+    expect(onAdd).toHaveBeenCalledWith("Arroz");
   });
 });
 
 // Redux Test
-import itemsReducer, { addItem } from '../itemsSlice';
+import itemsReducer, { addItem } from "../itemsSlice";
 
-describe('itemsSlice', () => {
-  it('should add item to state', () => {
+describe("itemsSlice", () => {
+  it("should add item to state", () => {
     const previousState = { items: [], loading: false };
     const newState = itemsReducer(
       previousState,
       addItem({
-        id: '1',
-        name: 'Leite',
-        createdAt: '2025-10-16T10:00:00Z',
-        updatedAt: '2025-10-16T10:00:00Z',
-      }),
+        id: "1",
+        name: "Leite",
+        createdAt: "2025-10-16T10:00:00Z",
+        updatedAt: "2025-10-16T10:00:00Z",
+      })
     );
 
     expect(newState.items).toHaveLength(1);
-    expect(newState.items[0].name).toBe('Leite');
+    expect(newState.items[0].name).toBe("Leite");
   });
 });
 ```
@@ -563,7 +631,7 @@ docker run -d \
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -575,12 +643,12 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "5432:5432"
 
   api:
     build: ./backend
     ports:
-      - '8080:8080'
+      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_URL: jdbc:postgresql://db:5432/shoppinglist
