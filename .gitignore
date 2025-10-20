@@ -1,0 +1,175 @@
+# ==========================
+# Global OS files
+# ==========================
+.DS_Store
+Thumbs.db
+._*
+
+# ==========================
+# Node / JavaScript
+# ==========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnp/
+.pnp.js
+
+# ==========================
+# Expo / React Native (mobile/)
+# ==========================
+mobile/node_modules/
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/web-build/
+mobile/android/
+mobile/ios/
+mobile/.gradle/
+mobile/.idea/
+mobile/.vscode/
+mobile/build/
+mobile/*.keystore
+mobile/*.jks
+mobile/*.p8
+mobile/.eas/
+
+# Android
+**/android/app/build/
+**/android/build/
+**/gradle/
+**/*.keystore
+
+# iOS
+**/ios/Pods/
+**/ios/build/
+**/DerivedData/
+**/*.pbxuser
+**/*.mode1v3
+**/*.mode2v3
+**/*.perspectivev3
+**/*.xcworkspace
+**/xcuserdata/
+**/ios/fastlane/report.xml
+
+# ==========================
+# Web (Vite / React)
+# ==========================
+web/node_modules/
+web/dist/
+web/.vite/
+web/.env.local
+web/.env.*.local
+
+# ==========================
+# Backend (Java / Maven / Spring)
+# ==========================
+backend/target/
+backend/.mvn/
+backend/.settings/
+backend/.idea/
+backend/*.log
+backend/*.iml
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+**/target/
+**/build/
+
+# Maven
+/.m2/repository/
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# ==========================
+# Firebase
+# ==========================
+firebase-debug.log
+firebase-debug.*.log
+/.firebaserc
+/.firebase/
+
+# ==========================
+# Env files
+# ==========================
+.env
+.env.*
+mobile/.env
+mobile/.env.*
+web/.env
+web/.env.*
+
+# ==========================
+# IDEs and editors
+# ==========================
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+/.history/
+.cache/
+
+# ==========================
+# Logs
+# ==========================
+*.log
+logs/
+lerna-debug.log*
+
+# ==========================
+# System files
+# ==========================
+*.swp
+*.swo
+*~
+
+# ==========================
+# Coverage
+# ==========================
+coverage/
+coverage/**/*
+
+# ==========================
+# Temporary files
+# ==========================
+*.tmp
+*.temp
+
+# Mac
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Docker
+docker-compose.override.yml
+.env.docker
+
+# Build artifacts
+/dist/
+/build/
+
+# Lock files - ignore lock files in subprojects to keep root lock authoritative
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Local npm bin
+.npm/
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
