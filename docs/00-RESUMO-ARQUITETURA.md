@@ -79,11 +79,13 @@
 
 ```json
 {
-  "framework": "React Native 0.73+",
-  "platform": "Expo ~50",
-  "language": "TypeScript 5.x",
+  "framework": "React Native (Expo SDK 54)",
+  "platform": "Expo ~54.0.0",
+  "language": "TypeScript 5.9.x",
   "database": "Firebase Firestore",
-  "hosting": "Expo EAS",
+  "firebase": "Firebase SDK 12.4.0",
+  "deployment": "Expo Go (dev) / EAS Build (prod)",
+  "status": "✅ Implementado",
   "cost": "R$ 0,00"
 }
 ```
@@ -97,6 +99,7 @@
   "language": "TypeScript 5.x",
   "database": "Firebase Firestore",
   "hosting": "Vercel",
+  "status": "⏳ Planejado",
   "cost": "R$ 0,00"
 }
 ```

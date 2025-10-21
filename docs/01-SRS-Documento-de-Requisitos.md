@@ -33,20 +33,21 @@ O sistema permitirá que dois usuários (casal) compartilhem uma lista de compra
 
 Sistema multiplataforma composto por:
 
-- Aplicativo móvel (React Native) para Android e iOS
-- Aplicação web (React)
-- Backend API REST (Java Spring Boot)
-- Banco de dados para persistência
+- **✅ Implementado:** Aplicativo móvel (React Native + Expo SDK 54) para Android e iOS
+- **⏳ Planejado:** Aplicação web (React + Vite)
+- **✅ Implementado:** Backend serverless (Firebase Firestore)
+- **✅ Implementado:** Sincronização em tempo real (Firebase Real-time)
 
 ### 2.2 Funções do Produto
 
-- Adicionar itens à lista de compras
-- Visualizar todos os itens da lista
-- Remover itens específicos da lista
-- Limpar toda a lista (botão "Nova Semana")
-- Sincronização em tempo real entre dispositivos
-- Funcionamento offline com sincronização posterior
-- Notificações sobre alterações na lista
+- ✅ Adicionar itens à lista de compras
+- ✅ Visualizar todos os itens da lista
+- ✅ Marcar itens como comprados (riscar)
+- ✅ Remover itens específicos da lista
+- ✅ Limpar toda a lista (botão "Limpar Lista")
+- ✅ Sincronização em tempo real entre dispositivos (Firebase)
+- ⏳ Funcionamento offline com sincronização posterior (Firebase cache)
+- ❌ Notificações sobre alterações na lista (não implementado)
 
 ### 2.3 Características dos Usuários
 
