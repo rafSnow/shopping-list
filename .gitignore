@@ -162,8 +162,6 @@ docker-compose.override.yml
 /dist/
 /build/
 
-# Lock files - ignore lock files in subprojects to keep root lock authoritative
-**/package-lock.json
 **/yarn.lock
 **/pnpm-lock.yaml
 
