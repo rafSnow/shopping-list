@@ -1,135 +1,145 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import type { Item } from "../types/Item";
+import {
+  colors,
+  gradients,
+  spacing,
+  borderRadius,
+  typography,
+  shadows,
+} from "../theme";
 
 interface ItemCardProps {
   item: Item;
-  onDelete: (id: string) => Promise<void>;
+  onTogglePurchased: (item: Item) => Promise<void>;
+  onDelete: (itemId: string, itemName: string) => Promise<void>;
 }
 
-export const ItemCard: React.FC<ItemCardProps> = ({ item, onDelete }) => {
-  const [deleting, setDeleting] = React.useState(false);
-  const scaleAnim = React.useRef(new Animated.Value(1)).current;
-
-  const handleDelete = async () => {
-    setDeleting(true);
-
-    // Animação de saída
-    Animated.spring(scaleAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
-
-    try {
-      await onDelete(item.id);
-    } catch (error) {
-      // Se falhar, volta animação
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-      }).start();
-      setDeleting(false);
-    }
-  };
-
+/**
+ * Componente de card individual para cada item da lista
+ */
+export const ItemCard: React.FC<ItemCardProps> = ({
+  item,
+  onTogglePurchased,
+  onDelete,
+}) => {
   return (
-    <Animated.View
-      style={[styles.container, { transform: [{ scale: scaleAnim }] }]}
+    <View
+      style={[styles.container, item.purchased && styles.containerPurchased]}
     >
-      <View style={styles.content}>
-        <View style={styles.icon}>
-          <Ionicons name="cart-outline" size={24} color="#4CAF50" />
+      <TouchableOpacity
+        style={styles.content}
+        onPress={() => onTogglePurchased(item)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.checkboxContainer}>
+          {item.purchased ? (
+            <LinearGradient
+              colors={gradients.success}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.checkbox}
+            >
+              <Text style={styles.checkmark}>✓</Text>
+            </LinearGradient>
+          ) : (
+            <View style={styles.checkboxEmpty} />
+          )}
         </View>
 
         <View style={styles.textContainer}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+          <Text style={[styles.name, item.purchased && styles.namePurchased]}>
+            {item.name}
+          </Text>
         </View>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleDelete}
-          disabled={deleting}
-          style={styles.deleteButton}
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => onDelete(item.id, item.name)}
+        activeOpacity={0.7}
+      >
+        <LinearGradient
+          colors={gradients.danger}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.deleteGradient}
         >
-          <Ionicons
-            name="trash-outline"
-            size={20}
-            color={deleting ? "#ccc" : "#f44336"}
-          />
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
+          <Text style={styles.deleteIcon}>🗑️</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
   );
-};
-
-const formatDate = (date: Date): string => {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "Agora";
-  if (minutes < 60) return `${minutes}m atrás`;
-  if (hours < 24) return `${hours}h atrás`;
-  if (days < 7) return `${days}d atrás`;
-
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-  });
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    flexDirection: "row",
+    backgroundColor: colors.cardBackground,
+    padding: spacing.lg,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: colors.surfaceLight,
+    ...shadows.medium,
+  },
+  containerPurchased: {
+    opacity: 0.6,
+    borderColor: colors.success,
   },
   content: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
   },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#E8F5E9",
+  checkboxContainer: {
+    marginRight: spacing.md,
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.sm,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+  },
+  checkboxEmpty: {
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.sm,
+    borderWidth: 2,
+    borderColor: colors.textMuted,
+  },
+  checkmark: {
+    color: colors.textPrimary,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
   },
   textContainer: {
     flex: 1,
   },
   name: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 4,
+    fontSize: typography.sizes.md,
+    color: colors.textPrimary,
+    fontWeight: typography.weights.medium,
   },
-  date: {
-    fontSize: 12,
-    color: "#999",
+  namePurchased: {
+    textDecorationLine: "line-through",
+    color: colors.textMuted,
   },
   deleteButton: {
-    padding: 8,
+    marginLeft: spacing.md,
+    borderRadius: borderRadius.sm,
+    overflow: "hidden",
+  },
+  deleteGradient: {
+    padding: spacing.sm,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteIcon: {
+    fontSize: 20,
   },
 });

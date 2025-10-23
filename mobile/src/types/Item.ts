@@ -1,27 +1,27 @@
 /**
- * Item da Lista de Compras
+ * Interface para Item da lista de compras
  */
 export interface Item {
   id: string;
   name: string;
+  purchased: boolean;
   createdAt: Date;
   updatedAt: Date;
   deleted: boolean;
 }
 
 /**
- * Item para criação (sem ID)
+ * DTO para criar novo item
  */
 export interface ItemCreate {
   name: string;
 }
 
 /**
- * Item do Firestore (com Timestamp)
+ * DTO para atualizar item
  */
-export interface ItemFirestore {
-  name: string;
-  createdAt: any; // Timestamp do Firestore
-  updatedAt: any; // Timestamp do Firestore
-  deleted: boolean;
+export interface ItemUpdate {
+  name?: string;
+  purchased?: boolean;
+  deleted?: boolean;
 }

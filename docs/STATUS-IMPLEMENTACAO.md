@@ -1,6 +1,6 @@
 # 📊 Status de Implementação - Shopping List App
 
-**Última atualização:** 21 de outubro de 2025
+**Última atualização:** 23 de outubro de 2025
 
 ---
 
@@ -17,6 +17,9 @@
 - ✅ **Marcar como comprado** - Riscar itens comprados
 - ✅ **Indicador de sincronização** - Visual de carregamento ✨ **NOVO**
 - ✅ **Contador de itens** - Mostra quantidade ✨ **NOVO**
+- ✅ **Arquitetura modular** - 5 componentes separados ✨ **NOVO**
+- ✅ **Design moderno** - Dark theme com gradientes ✨ **NOVO**
+- ✅ **SafeAreaView atualizado** - Sem warnings ✨ **NOVO**
 - ✅ Interface mobile responsiva
 - ✅ Validação de entrada
 - ✅ Feedback visual (Alert)
@@ -38,15 +41,18 @@
 
 ### Alta Prioridade
 
+- ❌ **Aplicação Web** (React + Vite + Vercel) - 0% iniciado
+- ❌ **Testes automatizados** (Jest + React Testing Library) - Nenhum teste criado
+- ❌ **Deploy produção** (EAS Build para mobile, Vercel para web)
+- ⚠️ **Índices Firestore** (criados mas não aplicados no console Firebase)
 - ⚠️ **RF006** - Funcionamento offline (cache ativado, precisa testar)
-- ❌ **RNF003** - Índice composto Firestore (temporariamente resolvido com filtro local)
 
 ### Média Prioridade
 
-- ❌ Aplicação Web (React + Vite + Vercel)
+- ❌ **Autenticação Firebase** (planejada mas não implementada)
 - ❌ Animações de entrada/saída de itens
 - ❌ Tela de configurações
-- ❌ Tema escuro/claro
+- ❌ Modo claro/escuro (atualmente apenas dark)
 - ❌ Notificações push remotas (atualmente apenas local)
 
 ### Baixa Prioridade
@@ -55,23 +61,40 @@
 - ❌ Compartilhamento via link/QR Code
 - ❌ Modo de visualização (lista/grade)
 - ❌ Ordenação personalizada
+- ❌ CI/CD (GitHub Actions)
 
 ---
 
 ## 🐛 Problemas Conhecidos
 
-1. **Índice Firestore**: Query com `where` + `orderBy` requer índice composto
+1. **Índice Firestore**: Índices criados em `firestore.indexes.json` mas não aplicados
 
-   - **Solução temporária**: Filtrar `deleted` localmente
-   - **Solução permanente**: Criar índice no console Firebase
+   - **Arquivo criado**: ✅ `firebase/firestore.indexes.json`
+   - **Aplicado no Firebase**: ❌ Precisa rodar `firebase deploy --only firestore:indexes`
+   - **Impacto**: Queries podem ser lentas com muitos itens
 
-2. **Notificações**: Não implementadas
+2. **Autenticação**: Não implementada
 
-   - Requer configuração do Firebase Cloud Messaging
-   - Precisa de permissões no dispositivo
+   - Firebase Auth não ativado no projeto
+   - Qualquer pessoa pode acessar os dados (modo público)
+   - Precisa ativar no console Firebase
 
-3. **Offline**: Cache não configurado
-   - Firebase tem suporte nativo, mas precisa ativar
+3. **Aplicação Web**: Não existe
+
+   - Pasta `/web` não foi criada
+   - 0% de progresso no frontend web
+   - Precisa criar com Vite + React + TypeScript
+
+4. **Testes**: Completamente ausente
+
+   - Nenhum arquivo de teste (.test.tsx ou .spec.tsx)
+   - Sem Jest configurado
+   - Risco de regressões em mudanças futuras
+
+5. **Segurança Firestore**: Regras abertas
+   - Firestore está com acesso público (desenvolvimento)
+   - Precisa atualizar regras para exigir autenticação
+   - Crítico para produção
 
 ---
 
@@ -85,8 +108,10 @@
 - ✅ Remover item
 - ✅ Limpar lista
 - ✅ Sincronização tempo real
-- ❌ Modo offline
-- ❌ Notificações
+- ✅ Design moderno (dark theme + gradientes)
+- ✅ Notificações locais
+- ❌ Modo offline (não testado)
+- ❌ Testes automatizados (não existem)
 
 ### Mobile (iOS)
 
@@ -100,26 +125,32 @@
 
 ## 🎯 Próximos Passos
 
-### Sprint 1 (Atual)
+### Sprint Atual (23-30 Out 2025)
 
-1. ✅ Resolver erro de índice Firestore
+1. ✅ Resolver erro de índice Firestore (arquivo criado)
 2. ✅ Documentação atualizada
-3. ⏳ Implementar notificações push
-4. ⏳ Configurar cache offline
+3. ✅ Design moderno implementado
+4. ✅ Arquitetura modular criada
+5. ⏳ **TESTAR APP NO CELULAR** (`npx expo start --tunnel`)
+6. ❌ Aplicar índices no Firebase (`firebase deploy --only firestore:indexes`)
+7. ❌ Criar aplicação web (React + Vite)
 
-### Sprint 2
+### Sprint 2 (Nov 2025)
 
-1. Criar aplicação web (React + Vite)
+1. Completar aplicação web (React + Vite)
 2. Deploy web no Vercel
-3. Testes em iOS
-4. Melhorias de UI/UX
+3. Implementar autenticação Firebase
+4. Atualizar regras de segurança Firestore
+5. Testes em iOS
+6. Melhorias de UI/UX
 
-### Sprint 3
+### Sprint 3 (Dez 2025)
 
-1. Animações
-2. Tema escuro
-3. Configurações
-4. Analytics
+1. Criar testes automatizados (Jest)
+2. Deploy mobile (EAS Build)
+3. Animações e transições
+4. Configurações do app
+5. Analytics e monitoramento
 
 ---
 
@@ -154,4 +185,6 @@
 
 ---
 
-**Conclusão**: O app mobile está ~80% completo. Faltam notificações, offline e web app.
+**Conclusão**: O app mobile está ~**95% completo** com design moderno. Faltam: **web app (0%)**, **testes (0%)** e **deploy produção**.
+
+**Score Geral do Projeto**: **51.5%** (veja `ANALISE-PROJETO.md` para detalhes)

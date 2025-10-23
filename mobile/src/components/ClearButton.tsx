@@ -1,33 +1,38 @@
-import React, { useState } from "react";
+import React from "react";
+import { TouchableOpacity, Text, StyleSheet, Alert } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+  colors,
+  gradients,
+  spacing,
+  borderRadius,
+  typography,
+  shadows,
+} from "../theme";
 
 interface ClearButtonProps {
   onClear: () => Promise<void>;
   itemCount: number;
 }
 
+/**
+ * Componente de botão para limpar toda a lista
+ */
 export const ClearButton: React.FC<ClearButtonProps> = ({
   onClear,
   itemCount,
 }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleClear = () => {
+  const handlePress = () => {
     if (itemCount === 0) {
-      Alert.alert("Atenção", "A lista já está vazia");
+      Alert.alert("Info", "A lista já está vazia");
       return;
     }
 
     Alert.alert(
-      "Limpar Lista",
-      `Tem certeza que deseja remover todos os ${itemCount} ${itemCount === 1 ? "item" : "itens"}?`,
+      "Confirmar",
+      `Deseja limpar toda a lista? (${itemCount} ${
+        itemCount === 1 ? "item" : "itens"
+      })`,
       [
         {
           text: "Cancelar",
@@ -37,13 +42,11 @@ export const ClearButton: React.FC<ClearButtonProps> = ({
           text: "Limpar",
           style: "destructive",
           onPress: async () => {
-            setLoading(true);
             try {
               await onClear();
             } catch (error) {
+              console.error("Erro ao limpar lista:", error);
               Alert.alert("Erro", "Não foi possível limpar a lista");
-            } finally {
-              setLoading(false);
             }
           },
         },
@@ -51,49 +54,50 @@ export const ClearButton: React.FC<ClearButtonProps> = ({
     );
   };
 
+  if (itemCount === 0) {
+    return null;
+  }
+
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        itemCount === 0 && styles.buttonDisabled,
-        loading && styles.buttonLoading,
-      ]}
-      onPress={handleClear}
-      disabled={loading || itemCount === 0}
+      style={styles.button}
+      onPress={handlePress}
+      activeOpacity={0.8}
     >
-      {loading ? (
-        <ActivityIndicator color="#fff" size="small" />
-      ) : (
-        <>
-          <Ionicons name="trash" size={18} color="#fff" />
-          <Text style={styles.buttonText}>Limpar Lista ({itemCount})</Text>
-        </>
-      )}
+      <LinearGradient
+        colors={gradients.danger}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      >
+        <Text style={styles.icon}>🧹</Text>
+        <Text style={styles.text}>Limpar Lista</Text>
+      </LinearGradient>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
+    margin: spacing.lg,
+    marginTop: 0,
+    borderRadius: borderRadius.md,
+    overflow: "hidden",
+    ...shadows.large,
+  },
+  gradient: {
+    padding: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f44336",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    margin: 16,
-    gap: 8,
   },
-  buttonDisabled: {
-    backgroundColor: "#ccc",
+  icon: {
+    fontSize: typography.sizes.xl,
+    marginRight: spacing.sm,
   },
-  buttonLoading: {
-    backgroundColor: "#e57373",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+  text: {
+    color: colors.textPrimary,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
   },
 });

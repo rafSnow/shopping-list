@@ -1,24 +1,57 @@
 {
-  "name": "ShoppingList",
-  "displayName": "Lista de Compras",
   "expo": {
-    "name": "Lista de Compras",
-    "slug": "shopping-list",
+    "name": "Shopping List",
+    "slug": "shopping-list-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "shoppinglist",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F23"
+    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shoppinglist.app"
+      "bundleIdentifier": "com.rafsnow.shoppinglist",
+      "buildNumber": "1",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "android": {
-      "package": "com.shoppinglist.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#667EEA"
+      },
+      "package": "com.rafsnow.shoppinglist",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#667EEA"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "652597c5-2dda-49b4-8e72-17fa9996d60d"
+      }
     }
   }
 }

@@ -1,28 +1,30 @@
 import React from "react";
-import { FlatList, View, Text, StyleSheet, RefreshControl } from "react-native";
+import { FlatList, View, Text, StyleSheet } from "react-native";
 import { ItemCard } from "./ItemCard";
 import type { Item } from "../types/Item";
+import { colors, spacing, typography } from "../theme";
 
 interface ItemListProps {
   items: Item[];
-  onDeleteItem: (id: string) => Promise<void>;
-  onRefresh?: () => void;
-  refreshing?: boolean;
+  onTogglePurchased: (item: Item) => Promise<void>;
+  onDeleteItem: (itemId: string, itemName: string) => Promise<void>;
 }
 
+/**
+ * Componente de lista de itens com FlatList
+ */
 export const ItemList: React.FC<ItemListProps> = ({
   items,
+  onTogglePurchased,
   onDeleteItem,
-  onRefresh,
-  refreshing = false,
 }) => {
   if (items.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>📝</Text>
+        <Text style={styles.emptyIcon}>�</Text>
         <Text style={styles.emptyTitle}>Lista vazia</Text>
         <Text style={styles.emptySubtitle}>
-          Adicione itens conforme consumir durante a semana
+          Comece adicionando seus primeiros itens para comprar
         </Text>
       </View>
     );
@@ -33,45 +35,45 @@ export const ItemList: React.FC<ItemListProps> = ({
       data={items}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <ItemCard item={item} onDelete={onDeleteItem} />
+        <ItemCard
+          item={item}
+          onTogglePurchased={onTogglePurchased}
+          onDelete={onDeleteItem}
+        />
       )}
       contentContainerStyle={styles.listContent}
-      refreshControl={
-        onRefresh ? (
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#4CAF50"]}
-          />
-        ) : undefined
-      }
+      showsVerticalScrollIndicator={false}
     />
   );
 };
 
 const styles = StyleSheet.create({
   listContent: {
-    paddingVertical: 8,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 32,
+    padding: spacing.xxl,
   },
-  emptyText: {
-    fontSize: 64,
-    marginBottom: 16,
+  emptyIcon: {
+    fontSize: 80,
+    marginBottom: spacing.lg,
+    opacity: 0.3,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: "#999",
+    fontSize: typography.sizes.md,
+    color: colors.textMuted,
     textAlign: "center",
+    paddingHorizontal: spacing.xl,
+    lineHeight: 22,
   },
 });

@@ -12,197 +12,134 @@ import {
   getDocs,
   writeBatch,
   Timestamp,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from 'firebase/firestore';
-import type { Item, ItemCreate, ItemFirestore } from '../types/Item';
+import type { Item } from '../types/Item';
 
-// ============================================
+// Re-exportar o tipo Item para compatibilidade
+export type { Item };
+
+interface ItemFirestore {
+  name: string;
+  purchased: boolean;
+  deleted: boolean;
+  createdAt: any;
+  updatedAt: any;
+}
+
 // Configuração Firebase
-// ============================================
-
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
 
-// Nome da collection
-const ITEMS_COLLECTION = 'items';
-
-// ============================================
-// Funções auxiliares
-// ============================================
-
-/**
- * Converte ItemFirestore para Item
- */
-const convertFirestoreToItem = (id: string, data: ItemFirestore): Item => ({
-  id,
-  name: data.name,
-  createdAt: data.createdAt?.toDate() || new Date(),
-  updatedAt: data.updatedAt?.toDate() || new Date(),
-  deleted: data.deleted,
+// Configurar Firestore com cache offline persistente
+// Isso acelera MUITO a primeira carga usando dados em cache
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
 });
 
-// ============================================
-// CRUD Operations
-// ============================================
+console.log('✅ Firebase inicializado com cache offline habilitado');
 
-/**
- * Adiciona um novo item
- */
-export const addItem = async (itemData: ItemCreate): Promise<string> => {
-  try {
-    const now = Timestamp.now();
-    const docRef = await addDoc(collection(db, ITEMS_COLLECTION), {
-      name: itemData.name.trim(),
-      createdAt: now,
-      updatedAt: now,
-      deleted: false,
-    });
+const ITEMS_COLLECTION = 'items';
 
-    console.log('Item adicionado com ID:', docRef.id);
-    return docRef.id;
-  } catch (error) {
-    console.error('Erro ao adicionar item:', error);
-    throw error;
-  }
+// Converter Firestore para Item
+const convertToItem = (id: string, data: ItemFirestore): Item => ({
+  id,
+  name: data.name,
+  purchased: data.purchased,
+  deleted: data.deleted,
+  createdAt: data.createdAt?.toDate() || new Date(),
+  updatedAt: data.updatedAt?.toDate() || new Date(),
+});
+
+// Adicionar item
+export const addItem = async (name: string): Promise<string> => {
+  const now = Timestamp.now();
+  const docRef = await addDoc(collection(db, ITEMS_COLLECTION), {
+    name: name.trim(),
+    purchased: false,
+    deleted: false,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return docRef.id;
 };
 
-/**
- * Atualiza um item existente
- */
-export const updateItem = async (itemId: string, newName: string): Promise<void> => {
-  try {
-    const itemRef = doc(db, ITEMS_COLLECTION, itemId);
-    await updateDoc(itemRef, {
-      name: newName.trim(),
-      updatedAt: Timestamp.now(),
-    });
-
-    console.log('Item atualizado:', itemId);
-  } catch (error) {
-    console.error('Erro ao atualizar item:', error);
-    throw error;
-  }
+// Alternar status de comprado
+export const togglePurchased = async (itemId: string, purchased: boolean): Promise<void> => {
+  const itemRef = doc(db, ITEMS_COLLECTION, itemId);
+  await updateDoc(itemRef, {
+    purchased,
+    updatedAt: Timestamp.now(),
+  });
 };
 
-/**
- * Remove um item (soft delete)
- */
+// Excluir item
 export const deleteItem = async (itemId: string): Promise<void> => {
-  try {
-    const itemRef = doc(db, ITEMS_COLLECTION, itemId);
-    await updateDoc(itemRef, {
-      deleted: true,
-      updatedAt: Timestamp.now(),
-    });
-
-    console.log('Item removido:', itemId);
-  } catch (error) {
-    console.error('Erro ao remover item:', error);
-    throw error;
-  }
+  const itemRef = doc(db, ITEMS_COLLECTION, itemId);
+  await updateDoc(itemRef, {
+    deleted: true,
+    updatedAt: Timestamp.now(),
+  });
 };
 
-/**
- * Limpa toda a lista (soft delete em batch)
- */
-export const clearAllItems = async (): Promise<number> => {
-  try {
-    const q = query(
-      collection(db, ITEMS_COLLECTION),
-      where('deleted', '==', false)
-    );
+// Limpar todos os itens
+export const clearAllItems = async (): Promise<void> => {
+  // Buscar todos os documentos sem filtro where para evitar erro de índice
+  const q = query(collection(db, ITEMS_COLLECTION));
+  const snapshot = await getDocs(q);
 
-    const snapshot = await getDocs(q);
+  const batch = writeBatch(db);
+  let count = 0;
 
-    if (snapshot.empty) {
-      console.log('Nenhum item para limpar');
-      return 0;
-    }
-
-    const batch = writeBatch(db);
-    const now = Timestamp.now();
-
-    snapshot.docs.forEach((docSnapshot) => {
+  snapshot.docs.forEach((docSnapshot) => {
+    const data = docSnapshot.data();
+    // Marcar como deletado apenas se ainda não foi deletado
+    if (!data.deleted) {
       batch.update(docSnapshot.ref, {
         deleted: true,
-        updatedAt: now,
+        updatedAt: Timestamp.now(),
       });
-    });
+      count++;
+    }
+  });
 
+  if (count > 0) {
     await batch.commit();
-
-    const count = snapshot.size;
-    console.log(`${count} itens removidos`);
-    return count;
-  } catch (error) {
-    console.error('Erro ao limpar lista:', error);
-    throw error;
   }
 };
 
-/**
- * Ouve mudanças em tempo real nos itens ativos
- * Retorna função unsubscribe para cancelar listener
- */
+// Ouvir mudanças em tempo real
 export const listenToItems = (
   callback: (items: Item[]) => void,
   onError?: (error: Error) => void
 ): (() => void) => {
+  // Query simplificada sem where + orderBy para evitar necessidade de índice
   const q = query(
     collection(db, ITEMS_COLLECTION),
-    where('deleted', '==', false),
     orderBy('createdAt', 'desc')
   );
 
-  const unsubscribe = onSnapshot(
+  return onSnapshot(
     q,
     (snapshot) => {
-      const items = snapshot.docs.map((doc) =>
-        convertFirestoreToItem(doc.id, doc.data() as ItemFirestore)
-      );
-
+      // Filtrar itens não deletados localmente
+      const items = snapshot.docs
+        .filter(docSnap => !(docSnap.data() as any).deleted)
+        .map((docSnap) => convertToItem(docSnap.id, docSnap.data() as ItemFirestore));
       callback(items);
     },
-    (error) => {
-      console.error('Erro no listener de itens:', error);
-      if (onError) {
-        onError(error as Error);
-      }
-    }
+    onError
   );
-
-  return unsubscribe;
-};
-
-/**
- * Busca itens uma única vez (sem listener)
- */
-export const getItems = async (): Promise<Item[]> => {
-  try {
-    const q = query(
-      collection(db, ITEMS_COLLECTION),
-      where('deleted', '==', false),
-      orderBy('createdAt', 'desc')
-    );
-
-    const snapshot = await getDocs(q);
-
-    const items = snapshot.docs.map((doc) =>
-      convertFirestoreToItem(doc.id, doc.data() as ItemFirestore)
-    );
-
-    return items;
-  } catch (error) {
-    console.error('Erro ao buscar itens:', error);
-    throw error;
-  }
 };
